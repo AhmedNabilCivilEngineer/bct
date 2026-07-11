@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BAYAN Company (BCT) - Heavy Enterprise Portal</title>
+    <!-- MQTT client library for synchronized cross-network corporate routing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        :root {
+            --primary-gold: #b38f4f;
+            --dark-gold: #8e6f37;
+            --dark-bg: #111111;
+            --card-bg: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #aaaaaa;
+            --border-color: #333333;
+            --success-green: #2ecc71;
+            --error-red: #e74c3c;
+            --info-blue: #3498db;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            padding: 10px;
+        }
+
+        html {
+            height: -webkit-fill-available;
+        }
+
+        .portal-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 420px;
+            padding: 30px 20px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .dashboard-container {
+            display: none;
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            grid-template-columns: 260px 1fr;
+            overflow: hidden;
+        }
+
+        .logo-area { margin-bottom: 20px; }
+        .logo-icon {
+            font-size: 54px;
+            font-weight: bold;
+            color: var(--primary-gold);
+            line-height: 1;
+            margin-bottom: 5px;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .company-name { font-size: 22px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .company-subtext { font-size: 13px; color: var(--primary-gold); letter-spacing: 3px; font-weight: bold; margin-top: 2px; }
+        .arabic-text { font-size: 13px; color: var(--text-muted); direction: rtl; margin-top: 10px; line-height: 1.4; }
+        .portal-title { font-size: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary-gold); margin-bottom: 8px; }
+        .input-group select, .input-group input {
+            width: 100%; padding: 12px; background-color: #222; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 16px;
+        }
+        .input-group select:focus, .input-group input:focus { outline: none; border-color: var(--primary-gold); }
+        .login-btn {
+            width: 100%; padding: 14px; background-color: var(--primary-gold); border: none; border-radius: 6px; color: #111; font-size: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s;
+        }
+        .login-btn:hover { background-color: var(--dark-gold); color: #fff; }
+
+        #message-box { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 14px; display: none; }
+        .error { background-color: rgba(231, 76, 60, 0.15); color: var(--error-red); border: 1px solid var(--error-red); }
+
+        .sidebar { background-color: #111; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .sidebar .mini-logo { font-size: 22px; font-weight: bold; color: var(--primary-gold); margin-bottom: 15px; }
+        .user-badge { background: #222; padding: 10px; border-radius: 6px; border-left: 3px solid var(--primary-gold); margin-bottom: 15px; font-size: 13px; }
+        
+        .channels-list h4 { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px;}
+        .channel-item { padding: 10px; border-radius: 6px; background: var(--card-bg); font-size: 13px; color: var(--primary-gold); font-weight: bold; border: 1px solid var(--border-color); margin-bottom: 15px; }
+        
+        .active-users-box { flex: 1; display: flex; flex-direction: column; margin-bottom: 15px; }
+        .active-users-box h4 { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; }
+        .users-list { display: flex; flex-direction: column; gap: 6px; }
+        .user-status-item { padding: 8px 12px; background: #1a1a1a; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; }
+        .user-status-dot { width: 6px; height: 6px; background: var(--success-green); border-radius: 50%; }
+
+        .logout-btn { padding: 10px; background: transparent; border: 1px solid var(--error-red); color: var(--error-red); border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; min-height: 40px; }
+        .logout-btn:hover { background: var(--error-red); color: #fff; }
+
+        .chat-area { display: flex; flex-direction: column; background: #161616; position: relative; overflow: hidden; }
+        .chat-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
+        .status-dot { width: 8px; height: 8px; background: var(--success-green); border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+        .messages-window { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: scroll; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            -webkit-overflow-scrolling: touch; 
+        }
+        
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; line-height: 1.4; font-size: 14px; word-break: break-word; }
+        .msg.received { background: #222; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--border-color); }
+        .msg.sent { background: var(--primary-gold); color: #111; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
+        .msg-meta { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; display: block; }
+        .msg.sent .msg-meta { color: #333; font-weight: bold; }
+
+        .chat-media-container { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .chat-img-preview { max-width: 100%; max-height: 200px; border-radius: 6px; display: block; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        
+        .file-download-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; background: #2a2a2a; color: var(--primary-gold); border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold; border: 1px solid var(--border-color); text-align: center; cursor: pointer; }
+        .msg.sent .file-download-link { background: #fff; color: #111; border-color: #eee; }
+
+        .progress-container { margin-top: 6px; background: #000; padding: 6px; border-radius: 4px; font-size: 11px; color: var(--info-blue); border: 1px solid #222; text-align: left; }
+
+        .input-bar { padding: 15px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; gap: 8px; align-items: center; }
+        .input-bar input { flex: 1; padding: 12px; background: #111; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 16px; }
+        .input-bar input:focus { outline: none; border-color: var(--primary-gold); }
+        
+        .attach-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #222; border: 1px solid var(--border-color); border-radius: 6px; color: var(--primary-gold); cursor: pointer; font-size: 20px; font-weight: bold; flex-shrink: 0; }
+        .send-btn { height: 44px; padding: 0 20px; background: var(--primary-gold); border: none; border-radius: 6px; color: #111; font-weight: bold; cursor: pointer; font-size: 15px; flex-shrink: 0; }
+
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            .portal-container { border-radius: 0; border: none; height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+            .dashboard-container { grid-template-columns: 1fr; height: 100vh; border-radius: 0; border: none; }
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: LOGIN PORTAL -->
+    <div class="portal-container" id="loginScreen">
+        <div class="logo-area">
+            <div class="logo-icon">B</div>
+            <div class="company-name">Bayan Company</div>
+            <div class="company-subtext">BCT</div>
+            <div class="arabic-text">
+                شركة بيان للمقاولات والتجارة<br>
+                <span style="font-size: 12px;">المهندس أحمد نبيل وشركاؤه</span>
+            </div>
+        </div>
+
+        <h2 class="portal-title">Heavy Operations Communications Portal</h2>
+
+        <form onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label for="portal-id">Select Portal / Identity</label>
+                <select id="portal-id" required>
+                    <option value="" disabled selected>-- Select your access level --</option>
+                    <option value="BCT-MGMT">Management Portal (ID: BCT-MGMT)</option>
+                    <option value="BCT-ENG">Engineering & Projects (ID: BCT-ENG)</option>
+                    <option value="BCT-COMM">Commercial & Trading (ID: BCT-COMM)</option>
+                    <option value="BCT-HR">HR & Personnel (ID: BCT-HR)</option>
+                    <option value="BCT-FIN">Finance & Accounting (ID: BCT-FIN)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Security Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="login-btn">Secure Login</button>
+        </form>
+
+        <div id="message-box"></div>
+    </div>
+
+    <!-- SCREEN 2: LIVE COMMUNICATIONS DASHBOARD -->
+    <div class="dashboard-container" id="dashboardScreen">
+        <aside class="sidebar">
+            <div class="mini-logo">BCT Portal</div>
+            <div class="user-badge">
+                <span style="color: var(--primary-gold); font-weight: bold;">Active User:</span>
+                <div id="displayUser">ID: None</div>
+            </div>
+            
+            <div class="channels-list">
+                <h4>Active Channel</h4>
+                <div class="channel-item">🏢 corporate-wide</div>
+            </div>
+
+            <div class="active-users-box">
+                <h4>Online Across Branches</h4>
+                <div class="users-list" id="presenceList"></div>
+            </div>
+
+            <button class="logout-btn" onclick="handleLogout()">Disconnect</button>
+        </aside>
+
+        <main class="chat-area">
+            <div class="chat-header">
+                <div id="chatRoomTitle" style="font-size:14px;">Bayan Network Feed</div>
+                <div style="font-size: 12px; color: var(--text-muted);"><span class="status-dot"></span> High Capacity Active</div>
+            </div>
+
+            <div class="messages-window" id="messagesWindow"></div>
+
+            <form class="input-bar" onsubmit="sendMessage(event)">
+                <input type="file" id="fileSelector" style="display: none;" onchange="handleFileSelection(this)">
+                <button type="button" class="attach-btn" onclick="document.getElementById('fileSelector').click()">📎</button>
+                <input type="text" id="typeBox" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="send-btn">Send</button>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const credentials = {
+            'BCT-MGMT': 'BayanAdmin2026', 'BCT-ENG': 'BayanEng2026', 'BCT-COMM': 'BayanTrade2026',
+            'BCT-HR': 'BayanHR2026', 'BCT-FIN': 'BayanFin2026'
+        };
+
+        let currentActiveUser = "";
+        let client = null;
+        let trackedOnlineUsers = {}; 
+        
+        // Dynamic collection arrays to capture file chunks assembling globally in background memory
+        let incompleteIncomingChunks = {};
+
+        const CHAT_TOPIC = "bayan/bct/heavy_sync/main_feed_v26"; 
+        const PRESENCE_TOPIC = "bayan/bct/heavy_sync/presence/";
+        const deviceSessionToken = "dev_" + Math.random().toString(16).substr(2, 8);
+        
+        // Chunk configuration settings (1MB blocks easily clear cross-network firewalls)
+        const CHUNK_SIZE_BYTES = 1024 * 1024; 
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const selectedId = document.getElementById('portal-id').value;
+            const enteredPassword = document.getElementById('password').value;
+            const messageBox = document.getElementById('message-box');
+
+            if (credentials[selectedId] === enteredPassword) {
+                currentActiveUser = selectedId;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboardScreen').style.display = 'grid';
+                document.getElementById('displayUser').innerText = selectedId;
+                initHeavySync();
+            } else {
+                messageBox.className = "error";
+                messageBox.innerHTML = "✗ Invalid Password. Access Denied.";
+                messageBox.style.display = "block";
+            }
+        }
+
+        function initHeavySync() {
+            const windowObj = document.getElementById('messagesWindow');
+            windowObj.innerHTML = `<div class="msg received"><span class="msg-meta">System</span>Synchronizing global pipelines...</div>`;
+
+            const options = { clientId: deviceSessionToken, clean: false };
+            client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', options);
+
+            client.on('connect', () => {
+                document.getElementById('chatRoomTitle').innerText = "🏢 Bayan Corporate Heavy Feed";
+                client.subscribe(CHAT_TOPIC, { qos: 1 });
+                client.subscribe(PRESENCE_TOPIC + "+/+", { qos: 1 });
+                client.publish(PRESENCE_TOPIC + currentActiveUser + "/" + deviceSessionToken, JSON.stringify({ status: "online" }), { qos: 1, retain: true });
+                windowObj.innerHTML = `<div class="msg received"><span class="msg-meta">System</span>Connected. Extended payload limit raised to 75MB.</div>`;
+            });
+
+            client.on('message', (topic, payload) => {
+                if (topic.startsWith(PRESENCE_TOPIC)) {
+                    handlePresenceUpdate(topic, payload.toString());
+                    return;
+                }
+                try {
+                    const data = JSON.parse(payload.toString());
+                    if (data.token !== deviceSessionToken) {
+                        // Check if packet is text or a file chunk
+                        if (data.isChunkFrame) {
+                            processIncomingFileChunk(data);
+                        } else {
+                            displayIncomingMessage(data.user, data.message, false, data.fileData);
+                        }
+                    }
+                } catch (e) {}
+            });
+        }
+
+        function handlePresenceUpdate(topic, payloadStr) {
+            try {
+                const parts = topic.split('/');
+                const role = parts[4];
+                const session = parts[5];
+                const data = JSON.parse(payloadStr);
+                if (!trackedOnlineUsers[role]) trackedOnlineUsers[role] = new Set();
+                if (data.status === "online") trackedOnlineUsers[role].add(session);
+                else trackedOnlineUsers[role].delete(session);
+                renderActiveUsersList();
+            } catch(e) {}
+        }
+
+        function renderActiveUsersList() {
+            const container = document.getElementById('presenceList');
+            container.innerHTML = "";
+            Object.keys(credentials).forEach(role => {
+                if (trackedOnlineUsers[role] && trackedOnlineUsers[role].size > 0) {
+                    container.innerHTML += `<div class="user-status-item"><span>${role}</span><span class="user-status-dot"></span></div>`;
+                }
+            });
+        }
+
+        // HEAVY SPLITTER SYSTEM: Converts file to data payload and segments it into 1MB sequential bursts
+        function handleFileSelection(inputElement) {
+            const file = inputElement.files[0];
+            if (!file || !client) return;
+
+            // Secure operational baseline limit adjusted to 75MB
+            if (file.size > 75 * 1024 * 1024) { 
+                alert("File size exceeds upgraded 75MB corporate transmission ceiling.");
+                inputElement.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const fullBase64Data = e.target.result;
+                const fileTransferId = "file_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+                
+                // Display placeholder block locally instantly
+                displayIncomingMessage("You (" + currentActiveUser + ")", `Broadcasting extended asset: <strong>${file.name}</strong> (${(file.size/(1024*1024)).toFixed(2)} MB)`, true, null, fileTransferId);
+                
+                // Segment raw string data array
+                let index = 0;
+                let chunkSequence = 0;
+                const totalChunksCount = Math.ceil(fullBase64Data.length / CHUNK_SIZE_BYTES);
+
+                function transmitNextSegment() {
+                    if (index < fullBase64Data.length) {
+                        const chunkStringBlock = fullBase64Data.substr(index, CHUNK_SIZE_BYTES);
+                        
+                        const chunkPayload = {
+                            token: deviceSessionToken,
+                            user: currentActiveUser,
+                            fileId: fileTransferId,
+                            fileName: file.name,
+                            fileType: file.type,
+                            isChunkFrame: true,
+                            chunkIndex: chunkSequence,
+                            totalChunks: totalChunksCount,
+                            binaryDataString: chunkStringBlock
+                        };
+
+                        client.publish(CHAT_TOPIC, JSON.stringify(chunkPayload), { qos: 1 });
+                        
+                        // Update local transfer tracking bar UI
+                        const progressUi = document.getElementById(`prog_${fileTransferId}`);
+                        if (progressUi) {
+                            progressUi.innerText = `Uploading: ${Math.round(((chunkSequence + 1) / totalChunksCount) * 100)}%`;
+                        }
+
+                        index += CHUNK_SIZE_BYTES;
+                        chunkSequence++;
+                        
+                        // Short dynamic rest frame prevents network interface flooding
+                        setTimeout(transmitNextSegment, 40); 
+                    } else {
+                        // All components passed down line safely, render final download button interface
+                        const progressUi = document.getElementById(`prog_${fileTransferId}`);
+                        if (progressUi) progressUi.style.display = "none";
+                        
+                        const completePayload = { name: file.name, type: file.type, encodedPayload: fullBase64Data };
+                        renderInjectedDownloadButton(fileTransferId, completePayload, true);
+                        
+                        // Send completion control header out to networks
+                        client.publish(CHAT_TOPIC, JSON.stringify({
+                            token: deviceSessionToken,
+                            user: currentActiveUser,
+                            message: `Completed file synchronization: <strong>${file.name}</strong>`,
+                            fileData: completePayload
+                        }), { qos: 1 });
+                    }
+                }
+                transmitNextSegment();
+            };
+
+            reader.readAsDataURL(file);
+            inputElement.value = "";
+        }
+
+        // RECONSTRUCTION LOADER: Captures, orders and caches component parts arriving over cross-network connections
+        function processIncomingFileChunk(chunkData) {
+            const fId = chunkData.fileId;
+            
+            if (!incompleteIncomingChunks[fId]) {
+                incompleteIncomingChunks[fId] = new Array(chunkData.totalChunks);
+                // Injected empty structural template for incoming message log display
+                displayIncomingMessage(chunkData.user, `Receiving extended asset: <strong>${chunkData.fileName}</strong>`, false, null, fId);
+            }
+            
+            incompleteIncomingChunks[fId][chunkData.chunkIndex] = chunkData.binaryDataString;
+            
+            const progressUi = document.getElementById(`prog_${fId}`);
+            const missingPieces = incompleteIncomingChunks[fId].filter(c => c === undefined).length;
+            const computedProgressPercent = Math.round(((chunkData.totalChunks - missingPieces) / chunkData.totalChunks) * 100);
+            
+            if (progressUi) {
+                progressUi.innerText = `Downloading components: ${computedProgressPercent}%`;
+            }
+
+            // Verify if sequence array elements are full
+            if (missingPieces === 0) {
+                if (progressUi) progressUi.style.display = "none";
+                
+                const fullyAssembledBase64 = incompleteIncomingChunks[fId].join('');
+                const reconstructedAsset = {
+                    name: chunkData.fileName,
+                    type: chunkData.fileType,
+                    encodedPayload: fullyAssembledBase64
+                };
+                
+                renderInjectedDownloadButton(fId, reconstructedAsset, false);
+                delete incompleteIncomingChunks[fId]; // Clear application processing buffer cache
+            }
+        }
+
+        function renderInjectedDownloadButton(containerId, finalizedFileObj, isSelf = false) {
+            const targetContainer = document.getElementById(`container_${containerId}`);
+            if (!targetContainer) return;
+            
+            const escapedName = finalizedFileObj.name.replace(/'/g, "\\'");
+            let insertMarkup = `<div class="chat-media-container">`;
+            
+            if (finalizedFileObj.type.startsWith('image/')) {
+                insertMarkup += `<img src="${finalizedFileObj.encodedPayload}" class="chat-img-preview" alt="Attachment" onclick="triggerHeavyFileDownload(this.src, '${escapedName}')">`;
+            }
+            
+            insertMarkup += `<div onclick="triggerHeavyFileDownload('${finalizedFileObj.encodedPayload}', '${escapedName}')" class="file-download-link">📥 Download File Now (${finalizedFileObj.name.split('.').pop().toUpperCase()})</div></div>`;
+            targetContainer.innerHTML += insertMarkup;
+        }
+
+        function triggerHeavyFileDownload(encodedDataString, filename) {
+            try {
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = encodedDataString;
+                downloadAnchor.download = filename;
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
+            } catch (err) {
+                alert("Storage runtime context blocked dynamic payload assembly.");
+            }
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            const textInput = document.getElementById('typeBox');
+            const text = textInput.value.trim();
+            if (text === "" || !client) return;
+
+            displayIncomingMessage("You (" + currentActiveUser + ")", text, true);
+
+            const payload = { token: deviceSessionToken, user: currentActiveUser, message: text };
+            client.publish(CHAT_TOPIC, JSON.stringify(payload), { qos: 1 });
+            textInput.value = ""; 
+        }
+
+        function displayIncomingMessage(sender, message, isSelf = false, fileData = null, fileIdPlaceholder = null) {
+            const windowObj = document.getElementById('messagesWindow');
+            const bubbleClass = isSelf ? "sent" : "received";
+            const structuralSelectorId = fileIdPlaceholder ? `id="container_${fileIdPlaceholder}"` : "";
+            
+            let appendHtml = `<div class="msg ${bubbleClass}" ${structuralSelectorId}><span class="msg-meta">${sender}</span><div>${message}</div>`;
+            
+            if (fileIdPlaceholder) {
+                appendHtml += `<div class="progress-container" id="prog_${fileIdPlaceholder}">Assembling network segments...</div>`;
+            }
+
+            if (fileData && fileData.encodedPayload) {
+                appendHtml += `<div class="chat-media-container">`;
+                const escapedName = fileData.name.replace(/'/g, "\\'");
+
+                if (fileData.type.startsWith('image/')) {
+                    appendHtml += `<img src="${fileData.encodedPayload}" class="chat-img-preview" alt="Attachment" onclick="triggerHeavyFileDownload(this.src, '${escapedName}')">`;
+                }
+                
+                appendHtml += `<div onclick="triggerHeavyFileDownload('${fileData.encodedPayload}', '${escapedName}')" class="file-download-link">📥 Download File (${fileData.name.split('.').pop().toUpperCase()})</div>`;
+                appendHtml += `</div>`;
+            }
+            
+            appendHtml += `</div>`;
+            windowObj.innerHTML += appendHtml;
+            scrollChatToBottom();
+        }
+
+        function scrollChatToBottom() {
+            const windowObj = document.getElementById('messagesWindow');
+            windowObj.scrollTop = windowObj.scrollHeight;
+        }
+
+        function handleLogout() {
+            if (client) {
+                client.publish(PRESENCE_TOPIC + currentActiveUser + "/" + deviceSessionToken, JSON.stringify({ status: "offline" }), { qos: 1, retain: true });
+                client.end();
+            }
+            document.getElementById('password').value = "";
+            document.getElementById('message-box').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+            currentActiveUser = "";
+            trackedOnlineUsers = {};
+            incompleteIncomingChunks = {};
+        }
+    </script>
+</body>
+</html>
