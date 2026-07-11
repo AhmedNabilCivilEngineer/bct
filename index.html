@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCT Enterprise Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        /* [Keep your CSS styles here as previously defined] */
+        body { background-color: #111; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        .container { width: 90%; max-width: 500px; padding: 20px; background: #222; border-radius: 8px; border: 1px solid #444; }
+        #progress { margin-top: 10px; color: #b38f4f; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Bayan Infinite-Transfer</h2>
+    <input type="file" id="filePicker" onchange="initTransfer(this)">
+    <div id="progress">Status: Ready</div>
+</div>
+
+<script>
+    // Configuration
+    const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+    const CHAT_TOPIC = "bayan/bct/infinite_sync/v2026";
+    const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+
+    let currentFile = null;
+    let currentChunkIndex = 0;
+    let totalChunks = 0;
+    let fileId = "";
+
+    function initTransfer(input) {
+        currentFile = input.files[0];
+        fileId = "id_" + Date.now();
+        totalChunks = Math.ceil(currentFile.size / CHUNK_SIZE);
+        currentChunkIndex = 0;
+        
+        // Notify others
+        client.publish(CHAT_TOPIC, JSON.stringify({type: "OFFER", fileId, name: currentFile.name, totalChunks}));
+        sendNextChunk();
+    }
+
+    function sendNextChunk() {
+        const start = currentChunkIndex * CHUNK_SIZE;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            client.publish(CHAT_TOPIC, JSON.stringify({
+                type: "DATA",
+                fileId,
+                index: currentChunkIndex,
+                data: e.target.result
+            }));
+            document.getElementById('progress').innerText = `Sending: ${currentChunkIndex + 1} / ${totalChunks}`;
+        };
+        reader.readAsDataURL(currentFile.slice(start, start + CHUNK_SIZE));
+    }
+
+    client.on('message', (topic, payload) => {
+        const msg = JSON.parse(payload.toString());
+        if (msg.type === "ACK" && msg.fileId === fileId) {
+            currentChunkIndex++;
+            if (currentChunkIndex < totalChunks) sendNextChunk();
+            else document.getElementById('progress').innerText = "Transfer Complete!";
+        }
+    });
+</script>
+</body>
+</html>
