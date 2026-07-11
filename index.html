@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BAYAN Company (BCT) - Communication Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        :root { --primary-gold: #b38f4f; --dark-bg: #111111; --card-bg: #1a1a1a; --text-light: #ffffff; --text-muted: #aaaaaa; --border-color: #333333; --success-green: #2ecc71; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--dark-bg); color: var(--text-light); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .portal-container { background-color: var(--card-bg); width: 100%; max-width: 420px; padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+        .dashboard-container { display: none; width: 900px; height: 85vh; border-radius: 12px; border: 1px solid var(--border-color); grid-template-columns: 260px 1fr; overflow: hidden; background: #1a1a1a; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        input, select { width: 100%; padding: 12px; background-color: #222; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; }
+        .login-btn { width: 100%; padding: 14px; background-color: var(--primary-gold); border: none; border-radius: 6px; color: #111; font-weight: bold; cursor: pointer; }
+        .sidebar { background-color: #111; padding: 20px; border-right: 1px solid var(--border-color); }
+        .msg { max-width: 85%; padding: 10px; margin: 5px; border-radius: 8px; background: #222; position: relative; }
+        .msg.sent { background: var(--primary-gold); color: #000; align-self: flex-end; margin-left: auto; }
+        .messages-window { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; }
+        .input-bar { padding: 15px; border-top: 1px solid #333; display: flex; gap: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="portal-container" id="loginScreen">
+        <h2>Bayan Company Portal</h2>
+        <form onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label>Select Identity</label>
+                <select id="portal-id" required>
+                    <option value="Eng. Ahmed Nabil">Eng. Ahmed Nabil</option>
+                    <option value="Eng. Youssef Nabil">Eng. Youssef Nabil</option>
+                    <option value="Eng. Noha Alhaddad">Eng. Noha Alhaddad</option>
+                    <option value="Eng. Nabil Hassan">Eng. Nabil Hassan</option>
+                </select>
+            </div>
+            <div class="input-group"><label>Password</label><input type="password" id="password" required></div>
+            <button type="submit" class="login-btn">Secure Login</button>
+        </form>
+    </div>
+
+    <div class="dashboard-container" id="dashboardScreen">
+        <aside class="sidebar">
+            <h3 style="color:var(--primary-gold)">Online Personnel</h3>
+            <div id="presenceList" style="margin-top:15px;"></div>
+        </aside>
+        <main style="display:flex; flex-direction:column;">
+            <div class="messages-window" id="messagesWindow"></div>
+            <form class="input-bar" onsubmit="sendMessage(event)">
+                <input type="text" id="typeBox" placeholder="Type a message..." required>
+                <button type="submit" class="login-btn" style="width:auto">Send</button>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const userCredentials = { 'Eng. Ahmed Nabil': 'Bayan2026', 'Eng. Youssef Nabil': 'Bayan2026', 'Eng. Noha Alhaddad': 'Bayan2026', 'Eng. Nabil Hassan': 'Bayan2026' };
+        let currentActiveUser = "", client, activeUsers = {};
+        const CHAT_TOPIC = "bayan/bct/main_chat";
+        const HB_TOPIC = "bayan/bct/heartbeat";
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const id = document.getElementById('portal-id').value;
+            if (userCredentials[id] === document.getElementById('password').value) {
+                currentActiveUser = id;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboardScreen').style.display = 'grid';
+                initMQTT();
+            } else { alert("Invalid Password"); }
+        }
+
+        function initMQTT() {
+            // Using a unique ID based on username so the broker recognizes each person
+            client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', { clientId: 'bct_' + currentActiveUser.replace(/ /g, '_') });
+            
+            client.on('connect', () => {
+                client.subscribe([CHAT_TOPIC, HB_TOPIC]);
+                // Send heartbeat every 5 seconds
+                setInterval(() => client.publish(HB_TOPIC, JSON.stringify({u: currentActiveUser})), 5000);
+            });
+
+            client.on('message', (t, p) => {
+                const data = JSON.parse(p.toString());
+                if (t === HB_TOPIC) {
+                    activeUsers[data.u] = Date.now();
+                    renderPresence();
+                } else if (t === CHAT_TOPIC && data.u !== currentActiveUser) {
+                    displayMsg(data.u, data.m, false);
+                }
+            });
+        }
+
+        function renderPresence() {
+            const now = Date.now();
+            let html = "";
+            for (let u in activeUsers) {
+                if (now - activeUsers[u] < 12000) html += `<div style="color:var(--success-green)">● ${u}</div>`;
+            }
+            document.getElementById('presenceList').innerHTML = html;
+        }
+
+        function displayMsg(u, m, isSelf) {
+            const win = document.getElementById('messagesWindow');
+            win.insertAdjacentHTML('beforeend', `<div class="msg ${isSelf?'sent':''}"><b>${u}:</b> ${m}</div>`);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('typeBox');
+            displayMsg("You", input.value, true);
+            client.publish(CHAT_TOPIC, JSON.stringify({u: currentActiveUser, m: input.value}));
+            input.value = "";
+        }
+    </script>
+</body>
+</html>
