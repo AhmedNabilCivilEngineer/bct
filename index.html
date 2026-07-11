@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAYAN Company (BCT) - Communication Portal</title>
+    <!-- MQTT library for keyless, instant global device synchronization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        :root {
+            --primary-gold: #b38f4f;
+            --dark-gold: #8e6f37;
+            --dark-bg: #111111;
+            --card-bg: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #aaaaaa;
+            --border-color: #333333;
+            --success-green: #2ecc71;
+            --error-red: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .portal-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .dashboard-container {
+            display: none;
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border-color);
+            grid-template-columns: 250px 1fr;
+            overflow: hidden;
+        }
+
+        .logo-area { margin-bottom: 30px; }
+        .logo-icon {
+            font-size: 64px;
+            font-weight: bold;
+            color: var(--primary-gold);
+            line-height: 1;
+            margin-bottom: 5px;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        .company-name { font-size: 24px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .company-subtext { font-size: 14px; color: var(--primary-gold); letter-spacing: 3px; font-weight: bold; margin-top: 2px; }
+        .arabic-text { font-size: 14px; color: var(--text-muted); direction: rtl; margin-top: 10px; line-height: 1.4; }
+        .portal-title { font-size: 18px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary-gold); margin-bottom: 8px; }
+        .input-group select, .input-group input {
+            width: 100%; padding: 12px; background-color: #222; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; font-size: 15px;
+        }
+        .input-group select:focus, .input-group input:focus { outline: none; border-color: var(--primary-gold); }
+        .login-btn {
+            width: 100%; padding: 14px; background-color: var(--primary-gold); border: none; border-radius: 6px; color: #111; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s;
+        }
+        .login-btn:hover { background-color: var(--dark-gold); color: #fff; }
+
+        #message-box { margin-top: 15px; padding: 10px; border-radius: 6px; font-size: 14px; display: none; }
+        .error { background-color: rgba(231, 76, 60, 0.15); color: var(--error-red); border: 1px solid var(--error-red); }
+
+        .sidebar { background-color: #111; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; }
+        .sidebar .mini-logo { font-size: 24px; font-weight: bold; color: var(--primary-gold); margin-bottom: 20px; }
+        .user-badge { background: #222; padding: 10px; border-radius: 6px; border-left: 3px solid var(--primary-gold); margin-bottom: 30px; font-size: 13px; }
+        .channels-list h4 { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 1px;}
+        .channel-item { padding: 10px; border-radius: 6px; background: var(--card-bg); font-size: 14px; color: var(--primary-gold); font-weight: bold; border: 1px solid var(--border-color); }
+        .logout-btn { margin-top: auto; padding: 10px; background: transparent; border: 1px solid var(--error-red); color: var(--error-red); border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s;}
+        .logout-btn:hover { background: var(--error-red); color: #fff; }
+
+        .chat-area { display: flex; flex-direction: column; background: #161616; }
+        .chat-header { padding: 20px; border-bottom: 1px solid var(--border-color); background: var(--card-bg); font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
+        .status-dot { width: 8px; height: 8px; background: var(--success-green); border-radius: 50%; display: inline-block; margin-right: 5px; }
+        
+        .messages-window { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        .msg { max-width: 75%; padding: 12px 16px; border-radius: 8px; line-height: 1.4; font-size: 14.5px; }
+        .msg.received { background: #222; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid var(--border-color); }
+        .msg.sent { background: var(--primary-gold); color: #111; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
+        .msg-meta { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        .msg.sent .msg-meta { color: #333; font-weight: bold; }
+
+        .input-bar { padding: 20px; background: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; gap: 10px; }
+        .input-bar input { flex: 1; padding: 12px; background: #111; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; }
+        .input-bar input:focus { outline: none; border-color: var(--primary-gold); }
+        .send-btn { padding: 0 24px; background: var(--primary-gold); border: none; border-radius: 6px; color: #111; font-weight: bold; cursor: pointer; }
+        .send-btn:hover { background: var(--dark-gold); color: #fff; }
+    </style>
+</head>
+<body>
+
+    <!-- SCREEN 1: LOGIN PORTAL -->
+    <div class="portal-container" id="loginScreen">
+        <div class="logo-area">
+            <div class="logo-icon">B</div>
+            <div class="company-name">Bayan Company</div>
+            <div class="company-subtext">BCT</div>
+            <div class="arabic-text">
+                شركة بيان للمقاولات والتجارة<br>
+                <span style="font-size: 12px;">المهندس أحمد نبيل وشركاؤه</span>
+            </div>
+        </div>
+
+        <h2 class="portal-title">Secure Communications Portal</h2>
+
+        <form onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <label for="portal-id">Select Portal / Identity</label>
+                <select id="portal-id" required>
+                    <option value="" disabled selected>-- Select your access level --</option>
+                    <option value="BCT-MGMT">Management Portal (ID: BCT-MGMT)</option>
+                    <option value="BCT-ENG">Engineering & Projects (ID: BCT-ENG)</option>
+                    <option value="BCT-COMM">Commercial & Trading (ID: BCT-COMM)</option>
+                    <option value="BCT-HR">HR & Personnel (ID: BCT-HR)</option>
+                    <option value="BCT-FIN">Finance & Accounting (ID: BCT-FIN)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Security Password</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="login-btn">Secure Login</button>
+        </form>
+
+        <div id="message-box"></div>
+    </div>
+
+    <!-- SCREEN 2: LIVE COMMUNICATIONS DASHBOARD -->
+    <div class="dashboard-container" id="dashboardScreen">
+        <aside class="sidebar">
+            <div class="mini-logo">BCT Portal</div>
+            <div class="user-badge">
+                <span style="color: var(--primary-gold); font-weight: bold;">Active User:</span>
+                <div id="displayUser">ID: None</div>
+            </div>
+            
+            <div class="channels-list">
+                <h4>Active Channel</h4>
+                <div class="channel-item" id="activeChannelName"># general-comms</div>
+            </div>
+
+            <button class="logout-btn" onclick="handleLogout()">Disconnect</button>
+        </aside>
+
+        <main class="chat-area">
+            <div class="chat-header">
+                <div id="chatRoomTitle">Bayan Secure Room</div>
+                <div style="font-size: 13px; color: var(--text-muted);"><span class="status-dot"></span> Encrypted Feed</div>
+            </div>
+
+            <div class="messages-window" id="messagesWindow"></div>
+
+            <form class="input-bar" onsubmit="sendMessage(event)">
+                <input type="text" id="typeBox" placeholder="Type a broadcast secure message..." autocomplete="off" required>
+                <button type="submit" class="send-btn">Send</button>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const credentials = {
+            'BCT-MGMT': 'BayanAdmin2026', 'BCT-ENG': 'BayanEng2026', 'BCT-COMM': 'BayanTrade2026',
+            'BCT-HR': 'BayanHR2026', 'BCT-FIN': 'BayanFin2026'
+        };
+
+        let currentActiveUser = "";
+        let client = null;
+        
+        // Unique channel endpoint path for Bayan Company
+        const CHAT_TOPIC = "bayan/company/bct_broadcast_channel_main"; 
+        // Generates an independent tracking token for this computer browser tab
+        const deviceSessionToken = "dev_" + Math.random().toString(16).substr(2, 8);
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const selectedId = document.getElementById('portal-id').value;
+            const enteredPassword = document.getElementById('password').value;
+            const messageBox = document.getElementById('message-box');
+
+            if (credentials[selectedId] === enteredPassword) {
+                currentActiveUser = selectedId;
+                
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('dashboardScreen').style.display = 'grid';
+                document.getElementById('displayUser').innerText = selectedId;
+                document.getElementById('chatRoomTitle').innerText = "🏢 Bayan Broadcast Feed";
+                document.getElementById('activeChannelName').innerText = "📢 company-wide-chat";
+                
+                initLiveSync();
+            } else {
+                messageBox.className = "error";
+                messageBox.innerHTML = "✗ Invalid Password. Access Denied.";
+                messageBox.style.display = "block";
+            }
+        }
+
+        function initLiveSync() {
+            const windowObj = document.getElementById('messagesWindow');
+            windowObj.innerHTML = `<div class="msg received"><span class="msg-meta">System</span>Connecting to Bayan Global Live Channel...</div>`;
+
+            // FIXED SSL PIPELINE PATH (Port 8884) to comply with GitHub HTTPS security rules
+            client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+
+            client.on('connect', () => {
+                client.subscribe(CHAT_TOPIC);
+                windowObj.innerHTML = `<div class="msg received"><span class="msg-meta">System</span>Connected! Messages appear on all synchronized company devices instantly.</div>`;
+            });
+
+            // Automatically listens and parses live incoming streams
+            client.on('message', (topic, payload) => {
+                try {
+                    const data = JSON.parse(payload.toString());
+                    // Deduplicate local broadcasts
+                    if (data.token !== deviceSessionToken) {
+                        displayIncomingMessage(data.user, data.message, false);
+                    }
+                } catch (e) {
+                    console.error("Malformed data packet caught.");
+                }
+            });
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            const textInput = document.getElementById('typeBox');
+            const text = textInput.value.trim();
+            if (text === "" || !client) return;
+
+            // 1. Instantly display locally on your terminal screen
+            displayIncomingMessage("You (" + currentActiveUser + ")", text, true);
+
+            // 2. Wrap and transmit the cloud data packet to all connected listeners
+            const payload = {
+                token: deviceSessionToken,
+                user: currentActiveUser,
+                message: text
+            };
+            client.publish(CHAT_TOPIC, JSON.stringify(payload));
+
+            textInput.value = ""; 
+        }
+
+        function displayIncomingMessage(sender, message, isSelf = false) {
+            const windowObj = document.getElementById('messagesWindow');
+            const bubbleClass = isSelf ? "sent" : "received";
+            
+            windowObj.innerHTML += `
+                <div class="msg ${bubbleClass}">
+                    <span class="msg-meta">${sender}</span>
+                    ${message}
+                </div>`;
+            scrollChatToBottom();
+        }
+
+        function scrollChatToBottom() {
+            const windowObj = document.getElementById('messagesWindow');
+            windowObj.scrollTop = windowObj.scrollHeight;
+        }
+
+        function handleLogout() {
+            if (client) client.end();
+            document.getElementById('password').value = "";
+            document.getElementById('message-box').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'block';
+            currentActiveUser = "";
+        }
+    </script>
+</body>
+</html>
