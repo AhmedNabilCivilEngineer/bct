@@ -430,6 +430,55 @@
             line-height: 1.6;
         }
 
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .team-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: #3b82f6;
+            background: var(--card-hover);
+        }
+
+        .team-role {
+            display: inline-block;
+            background: var(--accent-soft);
+            color: #93c5fd;
+            border: 1px solid rgba(147, 197, 253, 0.25);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            margin-bottom: 0.75rem;
+        }
+
+        .team-card h3 {
+            color: #f1f5f9;
+            font-size: 1.15rem;
+            font-weight: 650;
+            margin-bottom: 0.4rem;
+        }
+
+        .team-card p {
+            color: var(--text-muted);
+            font-size: 0.93rem;
+            line-height: 1.6;
+        }
+
         .timeline {
             display: flex;
             flex-direction: column;
@@ -715,7 +764,7 @@
                 transition: max-height 0.3s ease;
             }
 
-            .nav-links.open { max-height: 320px; }
+            .nav-links.open { max-height: 380px; }
 
             .nav-links li { border-bottom: 1px solid rgba(51, 65, 85, 0.5); }
 
@@ -747,6 +796,7 @@
                     <li><a href="#company" data-i18n="nav.company">Company</a></li>
                     <li><a href="#services" data-i18n="nav.services">Services</a></li>
                     <li><a href="#founder" data-i18n="nav.founder">Founder</a></li>
+                    <li><a href="#team" data-i18n="nav.team">Team</a></li>
                     <li><a href="#credentials" data-i18n="nav.credentials">Credentials</a></li>
                     <li><a href="#portfolio" data-i18n="nav.showcase">Showcase</a></li>
                 </ul>
@@ -832,8 +882,29 @@
             </div>
         </section>
 
+        <section id="team" class="section">
+            <h2 class="section-title" data-i18n="team.title">Leadership Team</h2>
+            <div class="team-grid">
+                <div class="team-card">
+                    <span class="team-role" data-i18n="team.f1.role">Co-Founder</span>
+                    <h3 data-i18n="team.f1.name">Eng. Youssef Nabil</h3>
+                    <p data-i18n="team.f1.desc">Architecture Engineer — responsible for architectural design, spatial planning, and coordination of building form and function across projects.</p>
+                </div>
+                <div class="team-card">
+                    <span class="team-role" data-i18n="team.f2.role">Co-Founder</span>
+                    <h3 data-i18n="team.f2.name">Eng. Noha Samir Alhaddad</h3>
+                    <p data-i18n="team.f2.desc">Structural Engineer — specializes in structural design, analysis, and ensuring the safety, stability, and code compliance of load-bearing systems.</p>
+                </div>
+                <div class="team-card">
+                    <span class="team-role" data-i18n="team.f3.role">CEO</span>
+                    <h3 data-i18n="team.f3.name">Eng. Nabil Hassan</h3>
+                    <p data-i18n="team.f3.desc">Structural Engineer — oversees structural engineering strategy, design integrity, and technical leadership across the company’s projects.</p>
+                </div>
+            </div>
+        </section>
+
         <section id="credentials" class="section">
-            <h2 class="section-title" data-i18n="credentials.title">Memberships & Credentials</h2>
+            <h2 class="section-title" data-i18n="credentials.title">Founder's Memberships & Credentials</h2>
             <div class="cv-card">
                 <div class="timeline">
                     <div class="timeline-item">
@@ -871,7 +942,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section-title" data-i18n="skills.title">Core Competencies & Technical Skills</h2>
+            <h2 class="section-title" data-i18n="skills.title">Founder's Core Competencies & Technical Skills</h2>
             <div class="cv-card">
                 <div class="skills-grid">
                     <div class="skill-group">
@@ -906,7 +977,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section-title" data-i18n="exp.title">Engineering Experience & Technical Projects</h2>
+            <h2 class="section-title" data-i18n="exp.title">Founder's Engineering Experience & Technical Projects</h2>
             <div class="cv-card">
                 <div class="timeline">
                     <div class="timeline-item">
@@ -956,7 +1027,7 @@
         </section>
 
         <section class="section">
-            <h2 class="section-title" data-i18n="edu.title">Education & Qualifications</h2>
+            <h2 class="section-title" data-i18n="edu.title">Founder's Education & Qualifications</h2>
             <div class="cv-card">
                 <div class="timeline">
                     <div class="timeline-item">
@@ -1155,6 +1226,7 @@
                 "nav.company": "Company",
                 "nav.services": "Services",
                 "nav.founder": "Founder",
+                "nav.team": "Team",
                 "nav.credentials": "Credentials",
                 "nav.showcase": "Showcase",
                 "hero.arTitle": "شركة هربن للإنشاءات الحديثة",
@@ -1179,7 +1251,17 @@
                 "founder.location": "📍 Alexandria, Egypt",
                 "summary.title": "Founder Professional Summary",
                 "summary.text": "Detail-oriented Civil & Project Controls Engineer and founder of <strong>Harbin Modern Construction</strong>, a general contracting firm. Registered professional with the Egyptian Syndicate of Engineers and Graduate Member of the Institution of Civil Engineers (GMICE). Specializing in integrated project management, Primavera P6 baseline scheduling, Earned Value Analysis (EVA), BIM structural modeling, and full-scope general contracting. Proven track record in executing structural finite element analysis, 3D rebar detailing, financial cash flow forecasting, and delivering construction projects from inception to handover. Adept at bridging structural design precision with robust cost engineering and schedule controls to ensure deliverable accuracy and project profitability.",
-                "credentials.title": "Memberships & Credentials",
+                "team.title": "Leadership Team",
+                "team.f1.role": "Co-Founder",
+                "team.f1.name": "Eng. Youssef Nabil",
+                "team.f1.desc": "Architecture Engineer — responsible for architectural design, spatial planning, and coordination of building form and function across projects.",
+                "team.f2.role": "Co-Founder",
+                "team.f2.name": "Eng. Noha Samir Alhaddad",
+                "team.f2.desc": "Structural Engineer — specializes in structural design, analysis, and ensuring the safety, stability, and code compliance of load-bearing systems.",
+                "team.f3.role": "CEO",
+                "team.f3.name": "Eng. Nabil Hassan",
+                "team.f3.desc": "Structural Engineer — oversees structural engineering strategy, design integrity, and technical leadership across the company’s projects.",
+                "credentials.title": "Founder's Memberships & Credentials",
                 "cred1.title": "Graduate Member of the Institution of Civil Engineers (GMICE)",
                 "cred1.date": "October 2025",
                 "cred1.org": "Institution of Civil Engineers (ICE), UK",
@@ -1192,7 +1274,7 @@
                 "cred3.date": "2025",
                 "cred3.org": "Egyptian Syndicate of Engineers - Civil Engineering Division (Alexandria Branch)",
                 "cred3.desc": "Licensed professional civil engineering status in Egypt.",
-                "skills.title": "Core Competencies & Technical Skills",
+                "skills.title": "Founder's Core Competencies & Technical Skills",
                 "skills.g0.title": "General Contracting",
                 "skills.g0.desc": "Full project delivery, site supervision, subcontractor coordination, quality assurance, and construction management from groundbreaking to handover.",
                 "skills.g1.title": "Project Controls & Planning",
@@ -1202,7 +1284,7 @@
                 "skills.g3.title": "CAD & Technical Drafting",
                 "skills.g3.desc": "AutoCAD Structural Detailing, Grid Axis Layouts, Reinforcement Plans & Schedules.",
                 "skills.g4.title": "Software Applications",
-                "exp.title": "Engineering Experience & Technical Projects",
+                "exp.title": "Founder's Engineering Experience & Technical Projects",
                 "exp1.title": "Geotechnical Site Investigation & Foundation Design Project",
                 "exp1.date": "Feb 2025",
                 "exp1.org": "Senior Graduation Project | Grade: Excellent | AASTMT - Dept. of Construction & Building Engineering",
@@ -1221,7 +1303,7 @@
                 "exp3.li1": "<strong>Structural Analysis (Autodesk Robot):</strong> Executed multi-story 3D frame modeling and finite element analysis (FEM) to verify vertical and lateral load pathways; performed ultimate punching shear analysis on flat slab systems.",
                 "exp3.li2": "<strong>BIM Modeling & Rebar Detailing (Autodesk Revit):</strong> Modeled deep and shallow foundation systems (isolated footings, pile caps, tie beams); generated 3D rebar cages, column starter bar anchorage nodes, and concrete shear cores.",
                 "exp3.li3": "<strong>CAD Drafting (AutoCAD):</strong> Produced precise AutoCAD structural plan sets, column grid axes, dimensional layouts, and top/bottom slab reinforcement distribution drawings.",
-                "edu.title": "Education & Qualifications",
+                "edu.title": "Founder's Education & Qualifications",
                 "edu1.title": "Bachelor Degree in Construction and Building Engineering",
                 "edu1.date": "Graduated Jan 2025",
                 "edu1.org": "Arab Academy for Science, Technology & Maritime Transport (AASTMT) - Alexandria, Egypt",
@@ -1285,6 +1367,7 @@
                 "nav.company": "الشركة",
                 "nav.services": "الخدمات",
                 "nav.founder": "المؤسس",
+                "nav.team": "الفريق",
                 "nav.credentials": "الاعتمادات",
                 "nav.showcase": "الأعمال",
                 "hero.arTitle": "شركة هربن للإنشاءات الحديثة",
@@ -1309,7 +1392,17 @@
                 "founder.location": "📍 الإسكندرية، مصر",
                 "summary.title": "الملخص المهني للمؤسس",
                 "summary.text": "مهندس مدني وضوابط مشاريع دقيق التفاصيل ومؤسس <strong>شركة هربن للإنشاءات الحديثة</strong>، وهي شركة مقاولات عامة. مسجل لدى نقابة المهندسين المصرية وعضو خريج في مؤسسة المهندسين المدنيين (GMICE). متخصص في إدارة المشاريع المتكاملة، وجدولة المسار الحرج بـ Primavera P6، وتحليل القيمة المكتسبة (EVA)، ونمذجة BIM الإنشائية، والمقاولات العامة الشاملة. سجل حافل في تنفيذ تحليل العناصر المحدودة الإنشائي، وتفصيل حديد التسليح ثلاثي الأبعاد، وتوقع التدفق النقدي المالي، وتسليم مشاريع البناء من البداية حتى التسليم. بارع في الربط بين دقة التصميم الإنشائي وهندسة التكاليف وضوابط الجداول لضمان دقة التسليم وربحية المشروع.",
-                "credentials.title": "العضويات والاعتمادات",
+                "team.title": "فريق القيادة",
+                "team.f1.role": "شريك مؤسس",
+                "team.f1.name": "م. يوسف نبيل",
+                "team.f1.desc": "مهندس معماري — مسؤول عن التصميم المعماري والتخطيط المكاني وتنسيق شكل ووظيفة المباني عبر المشاريع.",
+                "team.f2.role": "شريكة مؤسسة",
+                "team.f2.name": "م. نهى سمير الحداد",
+                "team.f2.desc": "مهندسة إنشائية — متخصصة في التصميم والتحليل الإنشائي وضمان سلامة واستقرار وامتثال أنظمة الأحمال للأكواد.",
+                "team.f3.role": "الرئيس التنفيذي",
+                "team.f3.name": "م. نبيل حسن",
+                "team.f3.desc": "مهندس إنشائي — يشرف على استراتيجية الهندسة الإنشائية وسلامة التصميم والقيادة الفنية عبر مشاريع الشركة.",
+                "credentials.title": "عضويات واعتمادات المؤسس",
                 "cred1.title": "عضو خريج في مؤسسة المهندسين المدنيين (GMICE)",
                 "cred1.date": "أكتوبر 2025",
                 "cred1.org": "مؤسسة المهندسين المدنيين (ICE)، المملكة المتحدة",
@@ -1322,7 +1415,7 @@
                 "cred3.date": "2025",
                 "cred3.org": "نقابة المهندسين المصرية - شعبة الهندسة المدنية (فرع الإسكندرية)",
                 "cred3.desc": "حالة مهنية مرخصة في الهندسة المدنية في مصر.",
-                "skills.title": "الكفاءات الأساسية والمهارات التقنية",
+                "skills.title": "الكفاءات الأساسية والمهارات التقنية للمؤسس",
                 "skills.g0.title": "المقاولات العامة",
                 "skills.g0.desc": "تسليم المشروع بالكامل، الإشراف على الموقع، تنسيق المقاولين من الباطن، ضمان الجودة، وإدارة الإنشاءات من وضع حجر الأساس حتى التسليم.",
                 "skills.g1.title": "ضوابط وتخطيط المشاريع",
@@ -1332,7 +1425,7 @@
                 "skills.g3.title": "الرسم الفني و CAD",
                 "skills.g3.desc": "تفصيل إنشائي بـ AutoCAD، تخطيط محاور الشبكة، مخططات وجداول التسليح.",
                 "skills.g4.title": "التطبيقات البرمجية",
-                "exp.title": "الخبرة الهندسية والمشاريع التقنية",
+                "exp.title": "الخبرة الهندسية والمشاريع التقنية للمؤسس",
                 "exp1.title": "مشروع التحقيق الجيوتقني وتصميم الأساسات",
                 "exp1.date": "فبراير 2025",
                 "exp1.org": "مشروع التخرج النهائي | التقدير: ممتاز | الأكاديمية العربية للعلوم والتكنولوجيا والنقل البحري - قسم هندسة التشييد والبناء",
@@ -1351,7 +1444,7 @@
                 "exp3.li1": "<strong>التحليل الإنشائي (Autodesk Robot):</strong> تنفيذ نمذجة الإطار ثلاثي الأبعاد متعدد الطوابق وتحليل العناصر المحدودة (FEM) للتحقق من مسارات الأحمال الرأسية والأفقية؛ إجراء تحليل قص الثقب النهائي على أنظمة البلاطات المسطحة.",
                 "exp3.li2": "<strong>نمذجة BIM وتفصيل التسليح (Autodesk Revit):</strong> نمذجة أنظمة الأساسات العميقة والضحلة (قواعد منفصلة، قبعات خوازيق، كمرات ربط)؛ توليد أقفاص حديد التسليح ثلاثية الأبعاد وعقد تثبيت حديد الأعمدة الابتدائي وأنوية القص الخرسانية.",
                 "exp3.li3": "<strong>الرسم بـ AutoCAD:</strong> إنتاج مجموعات مخططات إنشائية دقيقة، ومحاور شبكة الأعمدة، والتخطيطات الأبعاد، ورسومات توزيع حديد التسليح العلوي والسفلي للبلاطات.",
-                "edu.title": "التعليم والمؤهلات",
+                "edu.title": "تعليم ومؤهلات المؤسس",
                 "edu1.title": "درجة البكالوريوس في هندسة التشييد والبناء",
                 "edu1.date": "تخرج يناير 2025",
                 "edu1.org": "الأكاديمية العربية للعلوم والتكنولوجيا والنقل البحري (AASTMT) - الإسكندرية، مصر",
